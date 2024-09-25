@@ -14,6 +14,8 @@ from aim.ext.resource.log import LogLine
 from aim.ext.resource.stat import Stat
 from psutil import Process, cpu_percent
 
+from aim.ext.resource.gpustats import dcgm_gpustats
+
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +162,14 @@ class ResourceTracker(object):
             for resource, usage in gpu.items():
                 self._tracker()(
                     usage, name='{}{}'.format(AIM_RESOURCE_METRIC_PREFIX, resource), context={'gpu': gpu_idx}
+                )
+
+        # Store DCGM GPU stats
+        gpudata = dcgm_gpustats()
+        for gpu_idx in gpudata:
+            for metric in gpudata[gpu_idx]:
+                self._tracker()(
+                    gpudata[gpu_idx][metric], name="dcgm_"+metric, context={'gpu': gpu_idx}
                 )
 
     def _stat_collector(self):
